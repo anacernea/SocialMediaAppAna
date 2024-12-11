@@ -50,7 +50,10 @@ namespace SocialMediaAppAna.Models
                     NormalizedEmail = "ADMIN@TEST.COM",
                     Email = "admin@test.com",
                     NormalizedUserName = "ADMIN@TEST.COM",
-                    PasswordHash = hasher.HashPassword(null, "Admin1!")
+                    PasswordHash = hasher.HashPassword(null, "Admin1!"),
+                    Content = "Some content",
+                    FirstName = "Admin",
+                    LastName = "Admin"
                 },
 
                 new ApplicationUser
@@ -61,7 +64,10 @@ namespace SocialMediaAppAna.Models
                     NormalizedEmail = "EDITOR@TEST.COM",
                     Email = "editor@test.com",
                     NormalizedUserName = "EDITOR@TEST.COM",
-                    PasswordHash = hasher.HashPassword(null, "Editor1!")
+                    PasswordHash = hasher.HashPassword(null, "Editor1!"),
+                    Content = "Some content",
+                    FirstName = "Editor",
+                    LastName = "Editor"
                 },
 
                 new ApplicationUser
@@ -72,7 +78,10 @@ namespace SocialMediaAppAna.Models
                     NormalizedEmail = "USER@TEST.COM",
                     Email = "user@test.com",
                     NormalizedUserName = "USER@TEST.COM",
-                    PasswordHash = hasher.HashPassword(null, "User1!")
+                    PasswordHash = hasher.HashPassword(null, "User1!"),
+                    Content = "Some content",
+                    FirstName = "User",
+                    LastName = "User"
                 }
                 );
 

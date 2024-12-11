@@ -2,10 +2,10 @@
 
 #nullable disable
 
-namespace SocialMediaAppAna.Data.Migrations
+namespace SocialMediaAppAna.Migrations
 {
     /// <inheritdoc />
-    public partial class migratie1 : Migration
+    public partial class clase4 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
