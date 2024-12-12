@@ -12,10 +12,14 @@ public class Post
     public string Content { get; set; }
     public DateTime Date { get; set; }
     //imagine
-    public string Image { get; set; }
+    public string? Image { get; set; }
     //video
     // cheie externa user - o postare e asociata unui user
     public string? UserId { get; set; }
     // o postare are o colectie de comantarii 
+
+    // PASUL 6: useri si roluri
+    // proprietatea virtuala - un articol este postat de catre un user
+    public virtual ApplicationUser? User { get; set; }
     public virtual ICollection<Comment>? Comments { get; set; }
 }
