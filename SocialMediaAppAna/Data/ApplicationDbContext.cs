@@ -42,12 +42,12 @@ namespace SocialMediaAppAna.Data
             //relatii cu modelele User si Group
             modelBuilder.Entity<UserGroup>()
                 .HasOne(a => a.User)
-                .WithMany(a => a.UserGroup)
+                .WithMany(a => a.UserGroups)
                 .HasForeignKey(a => a.UserId);
 
             modelBuilder.Entity<UserGroup>()
                 .HasOne(a => a.Group)
-                .WithMany(a => a.UserGroup)
+                .WithMany(a => a.UserGroups)
                 .HasForeignKey(a => a.GroupId);
             //user-user
             //cheie primara compusa 

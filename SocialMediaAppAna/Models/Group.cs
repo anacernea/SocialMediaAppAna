@@ -19,5 +19,5 @@ public class Group
     // un grup are o colectie de mesaje 
     public virtual ICollection<Message>? Messages { get; set; }
     //many-to-many dintre grup si user
-    public virtual ICollection<UserGroup>? UserGroup { get; set; }
+    public virtual ICollection<UserGroup>? UserGroups { get; set; }
 }

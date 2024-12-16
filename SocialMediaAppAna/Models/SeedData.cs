@@ -52,6 +52,8 @@ namespace SocialMediaAppAna.Models
                     NormalizedUserName = "ADMIN@TEST.COM",
                     PasswordHash = hasher.HashPassword(null, "Admin1!"),
                     Content = "Some content",
+                    Image = "/images/default.jpeg",
+                    Visibility = "Public",
                     FirstName = "Admin",
                     LastName = "Admin"
                 },
@@ -66,6 +68,8 @@ namespace SocialMediaAppAna.Models
                     NormalizedUserName = "EDITOR@TEST.COM",
                     PasswordHash = hasher.HashPassword(null, "Editor1!"),
                     Content = "Some content",
+                    Image = "/images/default.jpeg",
+                    Visibility = "Public",
                     FirstName = "Editor",
                     LastName = "Editor"
                 },
@@ -80,6 +84,8 @@ namespace SocialMediaAppAna.Models
                     NormalizedUserName = "USER@TEST.COM",
                     PasswordHash = hasher.HashPassword(null, "User1!"),
                     Content = "Some content",
+                    Image = "/images/default.jpeg",
+                    Visibility = "Public",
                     FirstName = "User",
                     LastName = "User"
                 }
