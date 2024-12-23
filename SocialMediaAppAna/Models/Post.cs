@@ -11,9 +11,16 @@ public class Post
     //validare pt required ?? si min/max length
     public string Content { get; set; }
     public DateTime Date { get; set; }
+
     //imagine
     public string? Image { get; set; }
+
+    [NotMapped]
+    public IFormFile? ImageFile { get; set; }
+
     //video
+    public string? Video { get; set; }
+
     // cheie externa user - o postare e asociata unui user
     public string? UserId { get; set; }
     // o postare are o colectie de comantarii 

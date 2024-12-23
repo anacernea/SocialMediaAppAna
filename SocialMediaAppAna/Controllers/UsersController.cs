@@ -1,16 +1,4 @@
-﻿/*using Microsoft.AspNetCore.Mvc;
-
-namespace SocialMediaAppAna.Controllers
-{
-    public class UsersController : Controller
-    {
-        public IActionResult Index()
-        {
-            return View();
-        }
-    }
-}*/
-
+﻿
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
