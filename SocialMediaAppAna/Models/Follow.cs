@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using SocialMediaAppAna.Models;
 namespace SocialMediaAppAna.Models;
 public class Follow
@@ -10,6 +11,10 @@ public class Follow
     public string? FollowedId { get; set; }
     public virtual ApplicationUser? Follower { get; set; }
     public virtual ApplicationUser? Followed { get; set; }
+
+    [Required]
+    public string Status { get; set; } = "Pending"; // Default: cerere în așteptare
+
 }
 
 

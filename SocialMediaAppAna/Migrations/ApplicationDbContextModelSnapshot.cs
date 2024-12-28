@@ -285,6 +285,10 @@ namespace SocialMediaAppAna.Migrations
                     b.Property<string>("FollowedId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id", "FollowerId", "FollowedId");
 
                     b.HasIndex("FollowedId");
