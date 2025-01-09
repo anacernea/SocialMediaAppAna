@@ -1,21 +1,20 @@
-﻿using SocialMediaAppAna.Data;
-using SocialMediaAppAna.Models;
-using Ganss.Xss;
+﻿
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
+using Ganss.Xss;
+using SocialMediaAppAna.Data;
+using SocialMediaAppAna.Models;
 
 
-namespace SocialMediaAppAna.Controllers
+
+namespace SocialMediaApp.Controllers
 {
 
     public class PostsController : Controller
     {
-
-        // PASUL 10: useri si roluri 
 
         private readonly ApplicationDbContext db;
         private readonly IWebHostEnvironment _env;
@@ -31,14 +30,33 @@ namespace SocialMediaAppAna.Controllers
             db = context;
             _userManager = userManager;
             _roleManager = roleManager;
-            _env = env; 
+            _env = env;
         }
 
-        [Authorize(Roles = "User,Editor,Admin")]
+        [Authorize(Roles = "User,Admin")]
+        //[Authorize]
         public async Task<IActionResult> Index()
         {
-            var posts = db.Posts.Include("User")
-                                .OrderByDescending(a => a.Date);
+            //var posts = db.Posts.Include("User").OrderByDescending(a => a.Date);
+
+            //modificari sa se vada doar postarile utilizatorilor cu profil public sau cu profil privat daca sunteti prieteni
+            //utilizatorul curent
+            var currentUser = await _userManager.GetUserAsync(User);
+            ViewBag.UserCurent = currentUser;
+
+            // Lista de prieteni ai utilizatorului curent
+            var friends = await db.Follows
+                .Where(f => f.Status == "Accepted" &&
+                            (f.FollowerId == currentUser.Id || f.FollowedId == currentUser.Id))
+                .Select(f => f.FollowerId == currentUser.Id ? f.FollowedId : f.FollowerId)
+                .ToListAsync();
+
+
+            var posts = await db.Posts
+                .Include(p => p.User)
+                .Where(p => p.User.Visibility == "Public" || friends.Contains(p.UserId))
+                .OrderByDescending(p => p.Date)
+                .ToListAsync();
 
             ViewBag.Posts = posts;
             if (TempData.ContainsKey("message"))
@@ -47,12 +65,11 @@ namespace SocialMediaAppAna.Controllers
                 ViewBag.Alert = TempData["messageType"];
             }
 
-            //motor de cautare
-            //afisare paginata
+
             return View();
         }
         //afisare postare
-        [Authorize(Roles = "User,Editor,Admin")]
+        [Authorize(Roles = "User,Admin")]
         public async Task<IActionResult> Show(int id)
         {
             Post post = db.Posts.Include("User")
@@ -60,19 +77,19 @@ namespace SocialMediaAppAna.Controllers
                                 .Include("Comments.User")
                             .Where(post => post.Id == id)
                             .First();
-            
             SetAccessRights();
             if (TempData.ContainsKey("message"))
             {
                 ViewBag.Message = TempData["message"];
                 ViewBag.Alert = TempData["messageType"];
             }
-            
+
             return View(post);
         }
+
         //afisare parte comentarii
         [HttpPost]
-        [Authorize(Roles = "User,Editor,Admin")]
+        [Authorize(Roles = "User,Admin")]
         public IActionResult Show([FromForm] Comment comment)
         {
             comment.Date = DateTime.Now;
@@ -97,18 +114,21 @@ namespace SocialMediaAppAna.Controllers
                 return View(post);
             }
         }
+
+
+
         //pagina postare noua
-        [Authorize(Roles = "User,Editor,Admin")]
+        [Authorize(Roles = "User,Admin")]
         public IActionResult New()
         {
             Post post = new Post();
-           
+
             return View(post);
         }
 
         //pentru a pune postarea in baza de date
         [HttpPost]
-        [Authorize(Roles = "User,Editor,Admin")]
+        [Authorize(Roles = "User,Admin")]
         public async Task<IActionResult> New(Post post)
         {
             var sanitizer = new HtmlSanitizer();
@@ -122,20 +142,18 @@ namespace SocialMediaAppAna.Controllers
             {
                 post.Content = sanitizer.Sanitize(post.Content);
 
+                //postarea are imagini sau video
                 //salvarea imaginii
                 if (post.ImageFile != null)
                 {
-
                     var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
                     var uniqueFileName = Guid.NewGuid().ToString() + "_" + post.ImageFile.FileName;
                     var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {
                         await post.ImageFile.CopyToAsync(fileStream);
                         //post.ImageFile.CopyTo(fileStream);
                     }
-
                     post.Image = "/images/" + uniqueFileName; // Calea relativă
                 }
                 //video
@@ -143,7 +161,6 @@ namespace SocialMediaAppAna.Controllers
                 {
                     //post.Video = sanitizer.Sanitize(post.Video);
                     var youtubeBase = "https://www.youtube.com/embed/";
-
                     if (post.Video.Contains("watch?v="))
                     {
                         var videoId = post.Video.Split("watch?v=")[1].Split('&')[0]; // Extrage ID-ul videoclipului
@@ -167,16 +184,15 @@ namespace SocialMediaAppAna.Controllers
                 return View(post);
             }
         }
-        
-        [Authorize(Roles = "User,Editor,Admin")]
+
+        [Authorize(Roles = "User,Admin")]
         public async Task<IActionResult> Edit(int id)
         {
 
             Post post = db.Posts.Where(post => post.Id == id)
                                 .First();
 
-            if ((post.UserId == _userManager.GetUserId(User)) ||
-                User.IsInRole("Admin"))
+            if (post.UserId == _userManager.GetUserId(User)) //|| User.IsInRole("Admin"))
             {
                 return View(post);
             }
@@ -188,9 +204,9 @@ namespace SocialMediaAppAna.Controllers
             }
         }
         //pt a edita si in baza de date
-        //deocamdata nu se pot edita imaginile
+        //se modifica si video acum
         [HttpPost]
-        [Authorize(Roles = "User,Editor,Admin")]
+        [Authorize(Roles = "User,Admin")]
         public async Task<IActionResult> Edit(int id, Post requestPost, IFormFile? Image)
         {
             var sanitizer = new HtmlSanitizer();
@@ -198,10 +214,9 @@ namespace SocialMediaAppAna.Controllers
 
             if (ModelState.IsValid)
             {
-                if ((post.UserId == _userManager.GetUserId(User))
-                    || User.IsInRole("Admin"))
+                if (post.UserId == _userManager.GetUserId(User)) //|| User.IsInRole("Admin"))
                 {
-                    
+
                     requestPost.Content = sanitizer.Sanitize(requestPost.Content);
 
                     post.Content = requestPost.Content;
@@ -218,43 +233,36 @@ namespace SocialMediaAppAna.Controllers
                             ModelState.AddModelError("Image", "Fișierul trebuie să fie o imagine (jpg, jpeg, png, gif).");
                             return View(requestPost);
                         }
-
                         // Salvăm imaginea în wwwroot/images
                         var fileName = Guid.NewGuid().ToString() + fileExtension; // Nume unic pentru fișier
                         var storagePath = Path.Combine(_env.WebRootPath, "images", fileName);
                         var databaseFileName = "/images/" + fileName;
-
                         // Salvăm fișierul în server
                         using (var fileStream = new FileStream(storagePath, FileMode.Create))
                         {
                             await Image.CopyToAsync(fileStream);
                         }
-
                         // Setăm noua imagine pentru utilizator
                         post.Image = databaseFileName;
                     }
-
                     //post.Video = sanitizer.Sanitize(requestPost.Video);
-
-                    if (!string.IsNullOrEmpty(post.Video))
+                    if (!string.IsNullOrEmpty(requestPost.Video))
                     {
                         var youtubeBase = "https://www.youtube.com/embed/";
-
-                        if (post.Video.Contains("watch?v="))
+                        if (requestPost.Video.Contains("watch?v="))
                         {
-                            var videoId = post.Video.Split("watch?v=")[1].Split('&')[0]; // Extrage ID-ul videoclipului
+                            var videoId = requestPost.Video.Split("watch?v=")[1].Split('&')[0]; // Extrage ID-ul videoclipului
                             post.Video = youtubeBase + videoId;
                         }
-                        else if (post.Video.Contains("youtu.be/"))
+                        else if (requestPost.Video.Contains("youtu.be/"))
                         {
-                            var videoId = post.Video.Split("youtu.be/")[1].Split('&')[0];
+                            var videoId = requestPost.Video.Split("youtu.be/")[1].Split('&')[0];
                             post.Video = youtubeBase + videoId;
                         }
                     }
 
-
                     post.Date = DateTime.Now;
-                    
+
                     TempData["message"] = "Postarea a fost modificata";
                     TempData["messageType"] = "alert-success";
                     db.SaveChanges();
@@ -274,13 +282,13 @@ namespace SocialMediaAppAna.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "User,Editor,Admin")]
+        [Authorize(Roles = "User,Admin")]
         public ActionResult Delete(int id)
         {
             Post post = db.Posts.Include("Comments")
                                 .Where(post => post.Id == id)
                                 .First();
-          
+
             if ((post.UserId == _userManager.GetUserId(User))
                     || User.IsInRole("Admin"))
             {

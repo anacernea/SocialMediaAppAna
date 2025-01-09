@@ -1,0 +1,179 @@
+﻿@model SocialMediaAppAna.Models.Group
+
+<h2>@Model.Name</h2>
+<p>@Model.Content</p>
+
+@* buton de parasire grup *@
+@* daca utilizatorul curent nu e moderator *@
+@if(Model.User != null && (string)Model.UserId != ViewBag.UserCurent.Id)
+{
+    <form asp-action="Leave" asp-controller="Groups" method="post" asp-route-groupId="@Model.Id">
+        <button type="submit" class="btn btn-warning">Părăsește grupul</button>
+    </form>
+}
+
+@* moderatorul accepta/respinge cererile active*@
+@if(Model.User != null && (string)Model.UserId == ViewBag.UserCurent.Id)
+{
+    @* Aici pot schimba formatul sa nu fie tabel *@
+    <h3>Cereri de alăturare</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Utilizator</th>
+                <th>Acțiuni</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var request in ViewBag.Requests)
+            {
+                <tr>
+                    <td>@request.User.UserName</td>
+                    <td>
+                        <form asp-action="AcceptJoin" asp-controller="Groups" method="post" asp-route-userGroupId="@request.Id">
+                            <button type="submit" class="btn btn-success">Accept</button>
+                        </form>
+                        <br/>
+                        <form asp-action="RejectJoin" asp-controller="Groups" method="post" asp-route-userGroupId="@request.Id">
+                            <button type="submit" class="btn btn-danger">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@* informatii despre grup pe care le vede toata lumea *@
+@* persoanele din grup si mesajele *@
+<h3>Membrii grupului</h3>
+<table class="table">
+    @* <thead>
+        <tr>
+            <th>Membrii grupului</th>
+        </tr>
+    </thead> *@
+    <tbody>
+        <tr>
+            <td>@Model.User.FirstName @Model.User.LastName</td>
+        </tr>
+        @foreach (var member in ViewBag.Members)
+        {
+            <tr>
+                <td>@member.FirstName @member.LastName</td>
+                @if(Model.User != null && (string)Model.UserId == ViewBag.UserCurent.Id)
+                {
+                    <td>
+                        <form asp-action="Remove" asp-controller="Groups" method="post">
+                            <input type="hidden" name="userId" value="@member.Id">
+                            <input type="hidden" name="groupId" value="@Model.Id">
+                            <button type="submit" class="btn btn-warning">Elimina utilizatorul</button>
+                        </form>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h3>Mesaje</h3>
+@* Afisare mesaje impreuna cu butoanele de editare si stergere *@
+
+@if (Model.Messages != null && Model.Messages.Any())
+{
+    @foreach (var message in Model.Messages)
+    { 
+        <div class="container">
+            <div class="row">
+                <div class="col-md-2"></div>
+
+                <div class="col-md-8">
+
+                    <div>
+
+                        <p>@message.Content</p>
+                        <small>@message.Date</small>
+                        <strong><i class="bi bi-person"> @message.User.UserName</i></strong>
+
+                    </div>
+                    <br>
+
+                    <div class="d-flex">
+                    @if (message.UserId == ViewBag.UserCurent.Id)
+                    {
+                        <div>
+                            <a class="btn btn-outline-primary" asp-controller="Messages" asp-action="Edit" asp-route-id="@message.Id">
+                                <i class="bi bi-pencil-square"></i> Editeaza
+                            </a>
+                        </div>
+                    }
+                    @if (message.UserId == ViewBag.UserCurent.Id || User.IsInRole("Admin"))
+                    {
+                        <div>
+                            <form method="post" asp-controller="Messages" asp-action="Delete" asp-route-id="@message.Id">
+                                <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash"></i>Sterge</button
+                            </form>
+                        </div>
+                    }
+                    </div>
+                    
+
+                    <br />
+                </div>
+
+                <div class="col-md-2"></div>
+
+            </div>
+
+        </div>
+    }
+}
+else 
+{
+    <p>Utilizatorul nu are postari</p>    
+}
+
+
+
+@* Afisarea formularului in care se poate adauga un mesaj *@
+
+<div class="container">
+
+    <div class="row">
+
+        <div class="col-md-2"></div>
+
+        <div class="col-md-8">
+
+            <div class="card">
+
+                <form method="post" asp-controller="Groups" asp-action="Show">
+
+                    <div class="card-body">
+
+                        <input type="hidden" name="GroupId" value="@Model.Id" />
+
+                        <label>Continut mesaj</label>
+                        <br />
+
+                        <textarea class="form-control" name="Content"></textarea>
+
+                        <span asp-validation-for="Content" class="text-danger"></span>
+                        <br /><br />
+
+                        <button class="btn btn-success" type="submit">Adauga mesaj</button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-2"></div>
+
+    </div>
+
+</div>

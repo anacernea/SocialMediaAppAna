@@ -15,6 +15,7 @@ public class Group
     public string Content { get; set; }
     //grupul e creat de un user - moderator
     public string? UserId { get; set; }
+
     public virtual ApplicationUser? User { get; set; }
     // un grup are o colectie de mesaje 
     public virtual ICollection<Message>? Messages { get; set; }

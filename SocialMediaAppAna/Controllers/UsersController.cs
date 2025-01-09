@@ -38,9 +38,7 @@ namespace SocialMediaApp.Controllers
         }
 
         // toata lumea poate sa vada utilizatorii
-        // inclusiv persoanele neinregistrate 
         [Authorize(Roles = "User,Admin")]
-        //[Authorize] 
         public async Task<IActionResult> Index()
         {
             var currentUser = await _userManager.GetUserAsync(User);
@@ -88,13 +86,22 @@ namespace SocialMediaApp.Controllers
             ViewBag.UsersList = users;
             ViewBag.SearchString = search;
 
+            // Obține lista de prieteni ai utilizatorului curent
+            var friends = await db.Follows
+                .Where(f => f.Status == "Accepted" &&
+                            (f.FollowerId == currentUser.Id || f.FollowedId == currentUser.Id))
+                .Select(f => f.FollowerId == currentUser.Id ? f.FollowedId : f.FollowerId)
+                .ToListAsync();
+
+            ViewBag.Friends = friends;
+
             return View();
         }
 
 
         // vezi profilul - vizualizat doar daca e public 
         // daca e public vedem si postarile
-        [Authorize(Roles = "User,Editor,Admin")]
+        [Authorize(Roles = "User,Admin")]
         public async Task<ActionResult> Show(string id)
         {
             //ApplicationUser user = db.Users.Find(id);
@@ -103,13 +110,23 @@ namespace SocialMediaApp.Controllers
                   .Include(u => u.Posts)
                   .FirstOrDefaultAsync(u => u.Id == id);
 
+            var currentUser = await _userManager.GetUserAsync(User);
 
+            //verificare pentru a nu face Users/Show/id si sa vezi un utilizator daca profilul e privat si nu esti prieten
+            bool isFriend = await db.Follows.AnyAsync(f =>
+                f.Status == "Accepted" &&
+                ((f.FollowerId == currentUser.Id && f.FollowedId == id) ||
+                (f.FollowedId == currentUser.Id && f.FollowerId == id)));
 
+            if (user.Visibility == "Private" && !isFriend && currentUser.Id != id)
+            {
+                return RedirectToAction("Index");
+            }
             var roles = await _userManager.GetRolesAsync(user);
 
             ViewBag.Roles = roles;
 
-            ViewBag.UserCurent = await _userManager.GetUserAsync(User);
+            ViewBag.UserCurent = currentUser;
 
             //SetAccessRights();
 
@@ -118,6 +135,7 @@ namespace SocialMediaApp.Controllers
                 ViewBag.Message = TempData["message"];
                 ViewBag.Alert = TempData["messageType"];
             }
+
 
             return View(user);
         }
@@ -141,64 +159,7 @@ namespace SocialMediaApp.Controllers
             }
         }
 
-        // asta merge e ok dar nu salveaza imaginea noua 
-        // aici de continua editarea 
-        // [HttpPost]
-        // public async Task<ActionResult> Edit(string id, ApplicationUser newData)
-        // {
-        //     ApplicationUser user = db.Users.Find(id);
 
-        //     var currentUser = await _userManager.GetUserAsync(User);
-        //     ViewBag.UserCurent = currentUser;
-
-
-
-        //     user.AllRoles = GetAllRoles();
-
-
-        //         if (ModelState.IsValid)
-        //         {
-        //             if (user.Id == _userManager.GetUserId(User))
-        //             {
-        //                 user.FirstName = newData.FirstName;
-        //                 user.LastName = newData.LastName;
-        //                 user.UserName = newData.UserName;
-        //                 user.Email = newData.Email;
-
-        //                 user.Content = newData.Content;
-
-        //                 // daca vreau sa pun o poza noua de profil nu o salveaza in formular 
-
-        //                 if (!string.IsNullOrEmpty(newData.Image))
-        //                 {
-        //                     user.Image = newData.Image;
-        //                 }    
-
-        //                 user.Visibility = newData.Visibility;
-        //                 TempData["message"] = "Profilul a fost modificat";
-        //                 TempData["messageType"] = "alert-success";
-        //                 db.SaveChanges();
-
-        //                 // vreau sa se intoarca la show
-        //                 //return RedirectToAction("Index");
-        //                 return RedirectToAction("Show", new { id = user.Id });
-        //             }
-        //             else
-        //             {
-        //                 TempData["message"] = "Nu aveti dreptul sa faceti modificari asupra unui profil care nu va apartine";
-        //                 TempData["messageType"] = "alert-danger";
-        //                 return RedirectToAction("Index");
-        //             }
-
-        //         }
-        //         else
-        //         {
-        //             return View(newData);
-        //         }
-        //     }
-
-
-        //pentru a salva imaginea noua
         [HttpPost]
         public async Task<ActionResult> Edit(string id, ApplicationUser newData, IFormFile Image)
         {
@@ -301,8 +262,7 @@ namespace SocialMediaApp.Controllers
                 }
 
                 // Delete user groups
-                // ?? oare sterge tot grupul sau doar pe utilizator
-                // problema aici
+                // sterge grupurile utilizatorului(unde e moderator) si grupurile din care face parte
 
                 if (user.Groups.Count > 0)
                 {
@@ -384,4 +344,3 @@ namespace SocialMediaApp.Controllers
         }
     }
 }
-
