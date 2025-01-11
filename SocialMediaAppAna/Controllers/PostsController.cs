@@ -175,7 +175,7 @@ namespace SocialMediaApp.Controllers
 
                 db.Posts.Add(post);
                 db.SaveChanges();
-                TempData["message"] = "Postarea a fost adaugata";
+                TempData["message"] = "Postarea a fost adaugata!";
                 TempData["messageType"] = "alert-success";
                 return RedirectToAction("Index");
             }
@@ -263,7 +263,7 @@ namespace SocialMediaApp.Controllers
 
                     post.Date = DateTime.Now;
 
-                    TempData["message"] = "Postarea a fost modificata";
+                    TempData["message"] = "Postarea a fost modificata!";
                     TempData["messageType"] = "alert-success";
                     db.SaveChanges();
                     return RedirectToAction("Index");
@@ -294,7 +294,7 @@ namespace SocialMediaApp.Controllers
             {
                 db.Posts.Remove(post);
                 db.SaveChanges();
-                TempData["message"] = "Postarea a fost stearsa";
+                TempData["message"] = "Postarea a fost stearsa!";
                 TempData["messageType"] = "alert-success";
                 return RedirectToAction("Index");
             }
